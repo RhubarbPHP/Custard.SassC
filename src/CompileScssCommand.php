@@ -92,9 +92,9 @@ class CompileScssCommand extends CustardCommand
     {
         $dirHandle = opendir($directoryPath);
         $scssFiles = [];
-        while ($fileName = readdir($dirHandle)) {
+        while (($fileName = readdir($dirHandle)) !== false) {
             if (!StringTools::startsWith($fileName, '_') && StringTools::endsWith($fileName, '.scss')) {
-                $scssFiles[] = $directoryPath . $fileName;
+                $scssFiles[] = $directoryPath . '/' . $fileName;
             }
         }
         closedir($dirHandle);
