@@ -1,0 +1,27 @@
+{
+  "name": "rhubarbphp/custard-sassc",
+  "description": "A custard command for compiling SCSS into CSS using SassC",
+  "keywords": [
+    "mvp",
+    "presenter",
+    "leaf",
+    "rhubarb",
+    "php",
+    "framework"
+  ],
+  "homepage": "http://www.rhubarbphp.com/",
+  "license": "Apache-2.0",
+  "autoload": {
+    "psr-4": {
+      "Rhubarb\\Custard\\": "src/"
+    }
+  },
+  "require": {
+    "rhubarbphp/rhubarb": "^1.1.0",
+    "rhubarbphp/custard": "^1.0.9",
+    "eslider/sasscb": "^3.1"
+  },
+  "config": {
+    "bin-dir": "bin/"
+  }
+}
