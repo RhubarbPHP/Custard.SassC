@@ -21,6 +21,7 @@ namespace Rhubarb\Custard\SassC;
 use Rhubarb\Crown\String\StringTools;
 use Rhubarb\Custard\Command\CustardCommand;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class CompileScssCommand extends CustardCommand
@@ -28,6 +29,13 @@ class CompileScssCommand extends CustardCommand
     public function __construct()
     {
         parent::__construct('compile:scss');
+
+        $this->addOption('style', 's', InputOption::VALUE_REQUIRED, 'Output style. Can be: nested, compressed.', 'compressed');
+        $this->addOption('line-numbers', 'l', InputOption::VALUE_NONE, 'Emit comments showing original line numbers.');
+        $this->addOption('import-path', 'i', InputOption::VALUE_REQUIRED, 'Set Sass import path.');
+        $this->addOption('sourcemap', 'm', InputOption::VALUE_NONE, 'Emit source map.');
+        $this->addOption('omit-map-comment', 'M', InputOption::VALUE_NONE, 'Omits the source map url comment.');
+        $this->addOption('precision', 'p', InputOption::VALUE_REQUIRED, 'Set the precision for numbers.');
 
         $this->addArgument('input', null, 'File or directory to compile');
         $this->addArgument('output', null, 'File or directory to output to');
@@ -46,7 +54,7 @@ class CompileScssCommand extends CustardCommand
 
         if (!file_exists($inputPath)) {
             $this->writeNormal('The input path specified does not exist.', true);
-            return;
+            return 1;
         }
 
         $multiple = false;
@@ -58,7 +66,7 @@ class CompileScssCommand extends CustardCommand
 
             if (!count($scssFiles)) {
                 $this->writeNormal('The input directory does not contain any .css files.', true);
-                return;
+                return 1;
             }
         } else {
             $scssFiles = [$inputPath];
@@ -73,15 +81,32 @@ class CompileScssCommand extends CustardCommand
 
         if (!file_exists($outputPath)) {
             $this->writeNormal('The output path specified does not exist.', true);
-            return;
+            return 1;
         }
 
         if ($multiple && !is_dir($outputPath)) {
             $this->writeNormal('The input path was a directory so output path must also be a directory.', true);
-            return;
+            return 1;
         }
 
-        $this->compileScssFiles($scssFiles, $multiple, $outputPath);
+        return $this->compileScssFiles($scssFiles, $multiple, $outputPath);
+    }
+
+    protected function getOptionsForSassC()
+    {
+        $allowedOptions = array_flip(['style', 'line-numbers', 'import-path', 'sourcemap', 'omit-map-comment', 'precision']);
+        $specifiedOptions = array_intersect_key($this->input->getOptions(), $allowedOptions);
+
+        $options = [];
+        foreach ($specifiedOptions as $name => $value) {
+            if ($value === true) {
+                $options[] = "--$name";
+            } elseif (is_string($value)) {
+                $options[] = "--$name $value";
+            }
+        }
+
+        return implode(' ', $options);
     }
 
     /**
@@ -105,13 +130,16 @@ class CompileScssCommand extends CustardCommand
      * @param string[] $scssFiles
      * @param bool $inputIsDirectory
      * @param string $outputPath
+     * @return int Status code
      */
     protected function compileScssFiles($scssFiles, $inputIsDirectory, $outputPath)
     {
-        $cssFilePath = '';
+        $cssFilePath = $outputPath;
         if (!$inputIsDirectory && is_dir($outputPath)) {
             $cssFilePath = $outputPath . '/' . pathinfo($scssFiles[0], PATHINFO_FILENAME) . '.css';
         }
+
+        $status = 0;
 
         foreach ($scssFiles as $scssFilePath) {
             if ($inputIsDirectory) {
@@ -126,10 +154,26 @@ class CompileScssCommand extends CustardCommand
                 $exe = 'sassc';
             }
 
-            exec(VENDOR_DIR . '/eslider/sasscb/dist/' . $exe . ' ' . $scssFilePath . ' ' . $cssFilePath, $cliOutput);
+            exec(VENDOR_DIR . "/eslider/sasscb/dist/$exe {$this->getOptionsForSassC()} $scssFilePath $cssFilePath 2>&1", $cliOutput, $returnStatus);
 
-            $this->writeVerbose(implode("\n", $cliOutput), true);
-            $this->writeNormal($scssFilePath . ' compiled to ' . $cssFilePath, true);
+            $cliOutput = trim(implode("\n", $cliOutput));
+            if ($returnStatus) {
+                $this->writeNormal("<error>Compiling $scssFilePath failed</error>", true);
+                if ($cliOutput) {
+                    $this->writeNormal("<comment>$cliOutput</comment>", true);
+                }
+            } else {
+                if ($cliOutput) {
+                    $this->writeVerbose($cliOutput, true);
+                }
+                $this->writeNormal("<info>$scssFilePath compiled to $cssFilePath</info>", true);
+            }
+
+            if ($returnStatus) {
+                $status = $returnStatus;
+            }
         }
+
+        return $status;
     }
 }
