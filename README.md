@@ -1,6 +1,7 @@
 # Custard.SassC
 A custard command for compiling SCSS into CSS using SassC
 
+```
 Usage:
   compile:scss [options] <input> <output>
 
@@ -17,6 +18,7 @@ Options:
   -p, --precision=PRECISION      Set the precision for numbers.
   -a, --autoprefix               Run postcss autoprefixer on output CSS files.
   -vv                            Increase output verbosity (displays output from sasscb and autoprefixer).
+```
 
 **Note:** The autoprefixer option requires postcss CLI and autoprefixer to be installed globally. 
 These are node.js modules and can be installed
