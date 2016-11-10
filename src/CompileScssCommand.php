@@ -36,6 +36,7 @@ class CompileScssCommand extends CustardCommand
         $this->addOption('sourcemap', 'm', InputOption::VALUE_NONE, 'Emit source map.');
         $this->addOption('omit-map-comment', 'M', InputOption::VALUE_NONE, 'Omits the source map url comment.');
         $this->addOption('precision', 'p', InputOption::VALUE_REQUIRED, 'Set the precision for numbers.');
+        $this->addOption('autoprefix', 'a', InputOption::VALUE_NONE, 'Run postcss autoprefixer on output CSS files.');
 
         $this->addArgument('input', null, 'File or directory to compile');
         $this->addArgument('output', null, 'File or directory to output to');
@@ -80,20 +81,8 @@ class CompileScssCommand extends CustardCommand
         $outputPath = rtrim($outputPath, '/');
 
         if (!file_exists($outputPath)) {
-            if (pathinfo($outputPath, PATHINFO_EXTENSION) != null) {
-                // $outputPath has an extension, so assume it's a file path and check its parent is a directory
-                $outputDir = pathinfo($outputPath, PATHINFO_DIRNAME);
-                if (!file_exists($outputDir)) {
-                    $this->writeNormal("The output path $outputDir does not exist.", true);
-                    return 1;
-                } else if(!is_dir($outputDir)) {
-                    $this->writeNormal("The output path $outputDir is not a directory.", true);
-                    return 1;
-                }
-            } else {
-                $this->writeNormal("The output path $outputPath does not exist.", true);
-                return 1;
-            }
+            $this->writeNormal('The output path specified does not exist.', true);
+            return 1;
         }
 
         if ($multiple && !is_dir($outputPath)) {
@@ -179,6 +168,10 @@ class CompileScssCommand extends CustardCommand
                     $this->writeVerbose($cliOutput, true);
                 }
                 $this->writeNormal("<info>$scssFilePath compiled to $cssFilePath</info>", true);
+
+                if ($this->input->getOption('autoprefix')) {
+                    $returnStatus = $this->runAutoPrefixer($cssFilePath);
+                }
             }
 
             if ($returnStatus) {
@@ -187,5 +180,25 @@ class CompileScssCommand extends CustardCommand
         }
 
         return $status;
+    }
+
+    protected function runAutoPrefixer($cssFile)
+    {
+        exec("postcss --use autoprefixer $cssFile 2>&1 -o $cssFile", $cliOutput, $returnStatus);
+
+        $cliOutput = trim(implode("\n", $cliOutput));
+        if ($returnStatus) {
+            $this->writeNormal("<error>Autoprefixing $cssFile failed</error>", true);
+            if ($cliOutput) {
+                $this->writeNormal("<comment>$cliOutput</comment>", true);
+            }
+        } else {
+            if ($cliOutput) {
+                $this->writeVerbose($cliOutput, true);
+            }
+            $this->writeNormal("<info>$cssFile autoprefixed</info>", true);
+        }
+
+        return $returnStatus;
     }
 }
