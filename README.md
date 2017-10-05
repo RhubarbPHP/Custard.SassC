@@ -21,4 +21,5 @@ Options:
 ```
 
 **Note:** The autoprefixer option requires postcss CLI and autoprefixer to be installed globally. 
-These are node.js modules and can be installed
+These are node.js modules and can be installed globally with this command once you have node installed:
+`npm install -g postcss-cli autoprefixer`
