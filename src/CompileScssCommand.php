@@ -196,7 +196,7 @@ class CompileScssCommand extends CustardCommand
 
     protected function runAutoPrefixer($cssFile)
     {
-        exec("postcss --use autoprefixer $cssFile 2>&1 -o $cssFile", $cliOutput, $returnStatus);
+        exec("postcss $cssFile --use autoprefixer -o $cssFile 2>&1", $cliOutput, $returnStatus);
 
         $cliOutput = trim(implode("\n", $cliOutput));
         if ($returnStatus) {
