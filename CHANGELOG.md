@@ -1,5 +1,13 @@
 # Changelog
 
+### 1.0.5
+
+* Compatibility:  Postcss won't accept options before arguments anymore
+
+### 1.0.4
+
+* Bugfix:  Restored from 1.0.2: If an output filename was given and the file didn't exist already, the command wouldn't create it.
+
 ### 1.0.3
 
 * Added:   Autoprefixer option. This just runs CLI postcss, so it requires `npm install -g postcss-cli autoprefixer`
