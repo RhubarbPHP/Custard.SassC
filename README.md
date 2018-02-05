@@ -23,3 +23,9 @@ Options:
 **Note:** The autoprefixer option requires postcss CLI and autoprefixer to be installed globally. 
 These are node.js modules and can be installed globally with this command once you have node installed:
 `npm install -g postcss-cli autoprefixer`
+
+You may also need to install NVM using the below command in your Home directory
+`curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.6/install.sh | bash`
+`exit`
+Log back into your user account and run:
+`nvm install 6.11.5`
