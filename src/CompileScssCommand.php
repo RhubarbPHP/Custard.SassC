@@ -85,14 +85,16 @@ class CompileScssCommand extends CustardCommand
                 // $outputPath has an extension, so assume it's a file path and check its parent is a directory
                 $outputDir = pathinfo($outputPath, PATHINFO_DIRNAME);
                 if (!file_exists($outputDir)) {
-                    $this->writeNormal("The output path $outputDir does not exist.", true);
-                    return 1;
+                    if (!mkdir($outputDir, 0777, true)) {
+                        $this->writeNormal("The output path $outputDir does not exist and couldn't be created.", true);
+                        return 1;
+                    }
                 } else if (!is_dir($outputDir)) {
                     $this->writeNormal("The output path $outputDir is not a directory.", true);
                     return 1;
                 }
-            } else {
-                $this->writeNormal("The output path $outputPath does not exist.", true);
+            } else if (!mkdir($outputPath, 0777, true)) {
+                $this->writeNormal("The output path $outputPath does not exist and couldn't be created.", true);
                 return 1;
             }
         }
