@@ -184,7 +184,11 @@ class CompileScssCommand extends CustardCommand
                 $this->writeNormal("<info>$scssFilePath compiled to $cssFilePath</info>", true);
 
                 if ($this->input->getOption('autoprefix')) {
-                    $returnStatus = $this->runAutoPrefixer($cssFilePath);
+                    $returnStatus = $this->runAutoPrefixer(
+                        $cssFilePath,
+                        $this->input->getOption('sourcemap'),
+                        !$this->input->getOption('omit-map-comment')
+                    );
                 }
             }
 
@@ -196,9 +200,16 @@ class CompileScssCommand extends CustardCommand
         return $status;
     }
 
-    protected function runAutoPrefixer($cssFile)
+    protected function runAutoPrefixer($cssFile, $emitSourceMap = false, $includeInlineSourceMap = true)
     {
-        exec("postcss $cssFile --use autoprefixer -o $cssFile 2>&1", $cliOutput, $returnStatus);
+        $options = [$cssFile, '--use autoprefixer', "-o $cssFile"];
+        if ($emitSourceMap) {
+            $options[] = '-m';
+        }
+        if (!$includeInlineSourceMap) {
+            $options[] = '--no-map';
+        }
+        exec('postcss ' . implode(' ', $options) . ' 2>&1', $cliOutput, $returnStatus);
 
         $cliOutput = trim(implode("\n", $cliOutput));
         if ($returnStatus) {
