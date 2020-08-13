@@ -85,14 +85,16 @@ class CompileScssCommand extends CustardCommand
                 // $outputPath has an extension, so assume it's a file path and check its parent is a directory
                 $outputDir = pathinfo($outputPath, PATHINFO_DIRNAME);
                 if (!file_exists($outputDir)) {
-                    $this->writeNormal("The output path $outputDir does not exist.", true);
-                    return 1;
+                    if (!mkdir($outputDir, 0777, true)) {
+                        $this->writeNormal("The output path $outputDir does not exist and couldn't be created.", true);
+                        return 1;
+                    }
                 } else if (!is_dir($outputDir)) {
                     $this->writeNormal("The output path $outputDir is not a directory.", true);
                     return 1;
                 }
-            } else {
-                $this->writeNormal("The output path $outputPath does not exist.", true);
+            } else if (!mkdir($outputPath, 0777, true)) {
+                $this->writeNormal("The output path $outputPath does not exist and couldn't be created.", true);
                 return 1;
             }
         }
@@ -182,7 +184,11 @@ class CompileScssCommand extends CustardCommand
                 $this->writeNormal("<info>$scssFilePath compiled to $cssFilePath</info>", true);
 
                 if ($this->input->getOption('autoprefix')) {
-                    $returnStatus = $this->runAutoPrefixer($cssFilePath);
+                    $returnStatus = $this->runAutoPrefixer(
+                        $cssFilePath,
+                        $this->input->getOption('sourcemap'),
+                        !$this->input->getOption('omit-map-comment')
+                    );
                 }
             }
 
@@ -194,9 +200,16 @@ class CompileScssCommand extends CustardCommand
         return $status;
     }
 
-    protected function runAutoPrefixer($cssFile)
+    protected function runAutoPrefixer($cssFile, $emitSourceMap = false, $includeInlineSourceMap = true)
     {
-        exec("postcss $cssFile --use autoprefixer -o $cssFile 2>&1", $cliOutput, $returnStatus);
+        $options = [$cssFile, '--use autoprefixer', "-o $cssFile"];
+        if ($emitSourceMap) {
+            $options[] = '-m';
+        }
+        if (!$includeInlineSourceMap) {
+            $options[] = '--no-map';
+        }
+        exec('postcss ' . implode(' ', $options) . ' 2>&1', $cliOutput, $returnStatus);
 
         $cliOutput = trim(implode("\n", $cliOutput));
         if ($returnStatus) {
