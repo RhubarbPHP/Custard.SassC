@@ -1,5 +1,10 @@
 # Changelog
 
+### 1.0.6
+
+* Fix:    If the CSS output directory didn't already exist (as may often happen when CI deploying to a new folder), the CSS compilation would fail.
+* Fix:    Sourcemap parameters weren't passed to the CSS AutoPrefixer so they wouldn't be honoured if AutoPrefixer was used.
+
 ### 1.0.5
 
 * Compatibility:  Postcss won't accept options before arguments anymore
